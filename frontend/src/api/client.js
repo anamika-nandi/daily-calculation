@@ -50,16 +50,18 @@ client.interceptors.response.use(
         return client(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Refresh failed — redirect to login
-        window.location.href = '/login';
+        // Refresh failed — only redirect if not already on login page
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Other 401 errors — redirect to login
-    if (error.response?.status === 401) {
+    // Other 401 errors — only redirect if not already on login page
+    if (error.response?.status === 401 && !window.location.pathname.startsWith('/login')) {
       window.location.href = '/login';
     }
 
