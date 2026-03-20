@@ -14,14 +14,18 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: VITE_API_URL
           script: |
             cd ~/daily-calculation
             git pull origin main
             cd frontend
+            echo "VITE_API_URL=${VITE_API_URL}" > .env
             npm ci
             npm run build
             pm2 restart daily-frontend 2>/dev/null || pm2 start serve --name daily-frontend -- -s dist -l 5173
