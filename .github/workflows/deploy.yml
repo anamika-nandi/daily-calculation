@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to run"
+        type: choice
+        options:
+          - setup-node-pm2
+          - setup-nginx-ssl
+          - setup-clone-repo
+          - deploy-backend
+          - deploy-frontend
+          - deploy-fullstack
+
+jobs:
+  setup-node-pm2:
+    if: ${{ github.event.inputs.target == 'setup-node-pm2' }}
+    uses: ./.github/workflows/setup-node-pm2.yml
+    secrets: inherit
+
+  setup-nginx-ssl:
+    if: ${{ github.event.inputs.target == 'setup-nginx-ssl' }}
+    uses: ./.github/workflows/setup-nginx-ssl.yml
+    secrets: inherit
+
+  setup-clone-repo:
+    if: ${{ github.event.inputs.target == 'setup-clone-repo' }}
+    uses: ./.github/workflows/setup-clone-repo.yml
+    secrets: inherit
+
+  deploy-backend:
+    if: ${{ github.event.inputs.target == 'deploy-backend' }}
+    uses: ./.github/workflows/deploy-backend-api.yml
+    secrets: inherit
+
+  deploy-frontend:
+    if: ${{ github.event.inputs.target == 'deploy-frontend' }}
+    uses: ./.github/workflows/deploy-frontend-app.yml
+    secrets: inherit
+
+  deploy-fullstack:
+    if: ${{ github.event.inputs.target == 'deploy-fullstack' }}
+    uses: ./.github/workflows/deploy-fullstack.yml
+    secrets: inherit

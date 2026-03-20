@@ -1,0 +1,47 @@
+name: Setup Clone Repo & PM2 Startup
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Clone repo and configure PM2 startup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo and setup PM2 startup on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "========== 7. Git =========="
+            echo "Git: $(git --version)"
+
+            echo "========== 8. Clone repo =========="
+            if [ -d ~/daily-calculation ]; then
+              echo "Repo already cloned at ~/daily-calculation"
+            else
+              echo "Cloning repository..."
+              cd ~
+              git clone https://github.com/anamika-nandi/daily-calculation.git
+              echo "Cloned successfully"
+            fi
+
+            echo "========== 9. PM2 startup =========="
+            sudo env PATH=$PATH:$(which node | xargs dirname) $(which pm2) startup systemd -u $USER --hp $HOME
+            pm2 save
+
+            echo "========== 10. Versions Summary =========="
+            echo "Node.js: $(node -v)"
+            echo "npm:     $(npm -v)"
+            echo "PM2:     $(pm2 -v)"
+            echo "serve:   $(serve -v)"
+            echo "Nginx:   $(nginx -v 2>&1)"
+            echo "Certbot: $(certbot --version 2>&1)"
+            echo "Git:     $(git --version)"
+            echo "========== Setup Complete =========="

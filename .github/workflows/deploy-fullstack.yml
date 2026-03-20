@@ -1,0 +1,15 @@
+name: Deploy Full Stack
+
+on:
+  workflow_call:
+
+jobs:
+  backend:
+    name: Deploy Backend
+    uses: ./.github/workflows/deploy-backend-api.yml
+    secrets: inherit
+
+  frontend:
+    name: Deploy Frontend
+    uses: ./.github/workflows/deploy-frontend-app.yml
+    secrets: inherit

@@ -1,0 +1,39 @@
+name: Setup Nginx & SSL
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Install Nginx and Certbot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Nginx and Certbot on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "========== 5. Nginx =========="
+            if command -v nginx &> /dev/null; then
+              echo "Nginx already installed: $(nginx -v 2>&1)"
+            else
+              echo "Installing Nginx..."
+              sudo yum install -y nginx
+              sudo systemctl enable --now nginx
+              echo "Installed: $(nginx -v 2>&1)"
+            fi
+
+            echo "========== 6. Certbot + Nginx plugin =========="
+            if command -v certbot &> /dev/null; then
+              echo "Certbot already installed: $(certbot --version 2>&1)"
+            else
+              echo "Installing Certbot..."
+              sudo yum install -y certbot python3-certbot-nginx
+              echo "Installed: $(certbot --version 2>&1)"
+            fi

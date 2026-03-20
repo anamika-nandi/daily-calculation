@@ -1,11 +1,16 @@
-name: Deploy Full Stack
+name: Deploy Backend API
 
 on:
-  workflow_dispatch:
+  workflow_call:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
 
 jobs:
   deploy:
-    name: Deploy Full Stack to EC2
+    name: Deploy Backend API to EC2
     runs-on: ubuntu-latest
 
     steps:
@@ -65,21 +70,8 @@ jobs:
             FRONTEND_URL=${FRONTEND_URL}
             EOL
 
-            # Deploy frontend
-            cd frontend
-            npm ci
-            npm run build
-
-            # Deploy backend
-            cd ../backend
+            cd backend
             npm ci --production
-
-            # Restart frontend (from frontend dir)
-            cd ~/daily-calculation/frontend
-            pm2 restart daily-frontend 2>/dev/null || pm2 start serve --name daily-frontend -- -s dist -l 5173
-
-            # Restart backend (from backend dir)
-            cd ~/daily-calculation/backend
             pm2 restart daily-backend 2>/dev/null || pm2 start server.js --name daily-backend
             sleep 3
             curl -f http://localhost:3000/api/health || echo "Health check failed"

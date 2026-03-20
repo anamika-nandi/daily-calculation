@@ -1,0 +1,51 @@
+name: Setup Node.js, PM2 & serve
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Install Node.js, PM2, and serve
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Node.js, PM2, serve on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "========== 1. System Update =========="
+            sudo yum update -y
+
+            echo "========== 2. Node.js v24 =========="
+            if command -v node &> /dev/null; then
+              echo "Node.js already installed: $(node -v)"
+            else
+              echo "Installing Node.js v24..."
+              curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
+              sudo yum install -y nodejs
+              echo "Installed: $(node -v)"
+            fi
+
+            echo "========== 3. PM2 (global) =========="
+            if command -v pm2 &> /dev/null; then
+              echo "PM2 already installed: $(pm2 -v)"
+            else
+              echo "Installing PM2..."
+              sudo npm install -g pm2
+              echo "Installed: $(pm2 -v)"
+            fi
+
+            echo "========== 4. serve (global) =========="
+            if command -v serve &> /dev/null; then
+              echo "serve already installed: $(serve -v)"
+            else
+              echo "Installing serve..."
+              sudo npm install -g serve
+              echo "Installed: $(serve -v)"
+            fi
