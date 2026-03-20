@@ -12,15 +12,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    try {
+      const response = await authApi.getMe();
+      setUser(response.user);
+    } catch (error) {
+      // Try refreshing the token
       try {
+        await authApi.refresh();
         const response = await authApi.getMe();
         setUser(response.user);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      } catch {
+        setUser(null);
       }
     }
     setLoading(false);
@@ -29,8 +31,22 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     const response = await authApi.login(credentials);
     if (response.success) {
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
+    }
+    return response;
+  };
+
+  const loginWithOtp = async (email, otp) => {
+    const response = await authApi.verifyOtp(email, otp);
+    if (response.success) {
+      setUser(response.user);
+    }
+    return response;
+  };
+
+  const loginWithMagicLink = async (email, token) => {
+    const response = await authApi.verifyMagicLink(email, token);
+    if (response.success) {
       setUser(response.user);
     }
     return response;
@@ -42,8 +58,6 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Logout error:', error);
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -51,7 +65,10 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    loginWithOtp,
+    loginWithMagicLink,
     logout,
+    checkAuth,
     isAuthenticated: !!user
   };
 

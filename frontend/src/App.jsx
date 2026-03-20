@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
+import MagicLinkVerify from './pages/MagicLinkVerify';
 import Dashboard from './pages/Dashboard';
 import EggStock from './pages/EggStock';
 import FeedStock from './pages/FeedStock';
@@ -40,6 +41,14 @@ function App() {
         element={
           <PublicRoute>
             <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/magic-link"
+        element={
+          <PublicRoute>
+            <MagicLinkVerify />
           </PublicRoute>
         }
       />

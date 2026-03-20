@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Role from '../models/Role.js';
 
+// Protect routes — verify access token from HTTP-only cookie
 export const protect = async (req, res, next) => {
   try {
-    let token;
+    // Read token from cookie first, fall back to Authorization header
+    let token = req.cookies?.accessToken;
 
-    // Check for token in Authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (!token && req.headers.authorization?.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
 
@@ -17,11 +19,8 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Get user from token
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({
@@ -40,6 +39,13 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired',
+        code: 'TOKEN_EXPIRED'
+      });
+    }
     console.error('Auth middleware error:', error);
     return res.status(401).json({
       success: false,
@@ -48,6 +54,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Role-based authorization
 export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
@@ -57,5 +64,38 @@ export const authorize = (...roles) => {
       });
     }
     next();
+  };
+};
+
+// Permission-based authorization
+export const requirePermission = (...requiredPermissions) => {
+  return async (req, res, next) => {
+    try {
+      // Check user-level permissions first
+      const userPerms = req.user.permissions || [];
+
+      // Then check role-level permissions
+      const role = await Role.findOne({ name: req.user.role });
+      const rolePerms = role?.permissions || [];
+
+      const allPerms = new Set([...userPerms, ...rolePerms]);
+
+      const hasPermission = requiredPermissions.every(p => allPerms.has(p));
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions'
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Permission check error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
   };
 };
