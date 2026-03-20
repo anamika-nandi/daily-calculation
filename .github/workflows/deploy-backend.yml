@@ -1,0 +1,86 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+
+jobs:
+  deploy:
+    name: Deploy Backend to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          # Secrets (sensitive)
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          # Variables (non-sensitive)
+          APP_PORT: ${{ vars.APP_PORT }}
+          NODE_ENV: ${{ vars.NODE_ENV }}
+          JWT_ACCESS_EXPIRES_IN: ${{ vars.JWT_ACCESS_EXPIRES_IN }}
+          JWT_REFRESH_EXPIRES_IN: ${{ vars.JWT_REFRESH_EXPIRES_IN }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          GOOGLE_CALLBACK_URL: ${{ vars.GOOGLE_CALLBACK_URL }}
+          GH_OAUTH_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }}
+          GITHUB_CALLBACK_URL: ${{ vars.GITHUB_CALLBACK_URL }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ vars.SMTP_USER }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: MONGODB_URI,JWT_SECRET,JWT_REFRESH_SECRET,GOOGLE_CLIENT_SECRET,GH_OAUTH_CLIENT_SECRET,SMTP_PASS,APP_PORT,NODE_ENV,JWT_ACCESS_EXPIRES_IN,JWT_REFRESH_EXPIRES_IN,GOOGLE_CLIENT_ID,GOOGLE_CALLBACK_URL,GH_OAUTH_CLIENT_ID,GITHUB_CALLBACK_URL,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_FROM,FRONTEND_URL
+          script: |
+            cd ~/daily-calculation
+            git pull origin main
+
+            # Write backend .env from secrets + variables
+            cat > backend/.env << EOL
+            PORT=${APP_PORT}
+            MONGODB_URI=${MONGODB_URI}
+            NODE_ENV=${NODE_ENV}
+
+            # JWT Configuration
+            JWT_SECRET=${JWT_SECRET}
+            JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN}
+            JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+            JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
+
+            # OAuth - Google
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+            GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+
+            # OAuth - GitHub
+            GITHUB_CLIENT_ID=${GH_OAUTH_CLIENT_ID}
+            GITHUB_CLIENT_SECRET=${GH_OAUTH_CLIENT_SECRET}
+            GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL}
+
+            # SMTP for OTP / Magic Link
+            SMTP_HOST=${SMTP_HOST}
+            SMTP_PORT=${SMTP_PORT}
+            SMTP_USER=${SMTP_USER}
+            SMTP_PASS=${SMTP_PASS}
+            SMTP_FROM=${SMTP_FROM}
+
+            # Frontend URL (for redirects)
+            FRONTEND_URL=${FRONTEND_URL}
+            EOL
+
+            cd backend
+            npm ci --production
+            pm2 restart daily-backend
+            sleep 3
+            curl -f http://localhost:3000/api/health || echo "Health check failed"
