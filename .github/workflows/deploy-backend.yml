@@ -51,36 +51,26 @@ jobs:
             PORT=${APP_PORT}
             MONGODB_URI=${MONGODB_URI}
             NODE_ENV=${NODE_ENV}
-
-            # JWT Configuration
             JWT_SECRET=${JWT_SECRET}
             JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN}
             JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
             JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
-
-            # OAuth - Google
             GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
             GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
             GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
-
-            # OAuth - GitHub
             GITHUB_CLIENT_ID=${GH_OAUTH_CLIENT_ID}
             GITHUB_CLIENT_SECRET=${GH_OAUTH_CLIENT_SECRET}
             GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL}
-
-            # SMTP for OTP / Magic Link
             SMTP_HOST=${SMTP_HOST}
             SMTP_PORT=${SMTP_PORT}
             SMTP_USER=${SMTP_USER}
             SMTP_PASS=${SMTP_PASS}
             SMTP_FROM=${SMTP_FROM}
-
-            # Frontend URL (for redirects)
             FRONTEND_URL=${FRONTEND_URL}
             EOL
 
             cd backend
             npm ci --production
-            pm2 restart daily-backend
+            pm2 restart daily-backend 2>/dev/null || pm2 start server.js --name daily-backend
             sleep 3
             curl -f http://localhost:3000/api/health || echo "Health check failed"
