@@ -31,28 +31,6 @@ export const authApi = {
     return response.data;
   },
 
-  // ─── OTP ─────────────────────────────────────────────────────
-  sendOtp: async (email) => {
-    const response = await client.post('/auth/otp/send', { email });
-    return response.data;
-  },
-
-  verifyOtp: async (email, otp) => {
-    const response = await client.post('/auth/otp/verify', { email, otp });
-    return response.data;
-  },
-
-  // ─── Magic Link ──────────────────────────────────────────────
-  sendMagicLink: async (email) => {
-    const response = await client.post('/auth/magic-link/send', { email });
-    return response.data;
-  },
-
-  verifyMagicLink: async (email, token) => {
-    const response = await client.post('/auth/magic-link/verify', { email, token });
-    return response.data;
-  },
-
   // ─── OAuth URLs ──────────────────────────────────────────────
   getGoogleAuthUrl: () => '/api/auth/google',
   getGithubAuthUrl: () => '/api/auth/github'

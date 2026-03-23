@@ -7,13 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
-const TABS = {
-  PASSWORD: 'password',
-  OTP: 'otp'
-};
-
 export default function Login() {
-  const [activeTab, setActiveTab] = useState(TABS.PASSWORD);
   const [searchParams] = useSearchParams();
   const oauthError = searchParams.get('error');
 
@@ -37,33 +31,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* Tab Switcher */}
-          <div className="flex border rounded-lg overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setActiveTab(TABS.PASSWORD)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                activeTab === TABS.PASSWORD
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Password
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab(TABS.OTP)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                activeTab === TABS.OTP
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Email OTP
-            </button>
-          </div>
-
-          {activeTab === TABS.PASSWORD ? <PasswordForm /> : <OtpForm />}
+          <PasswordForm />
 
           {/* Divider */}
           <div className="relative">
@@ -169,147 +137,5 @@ function PasswordForm() {
         {loading ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>
-  );
-}
-
-// ─── OTP Login Form ──────────────────────────────────────────────
-
-function OtpForm() {
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { loginWithOtp } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-    setError('');
-    setMessage('');
-    setLoading(true);
-
-    try {
-      const response = await authApi.sendOtp(email);
-      if (response.success) {
-        setOtpSent(true);
-        setMessage('OTP sent to your email');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await loginWithOtp(email, otp);
-      if (response.success) {
-        navigate('/');
-      } else {
-        setError(response.message || 'Invalid OTP');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Verification failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendMagicLink = async () => {
-    if (!email) {
-      setError('Please enter your email first');
-      return;
-    }
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await authApi.sendMagicLink(email);
-      if (response.success) {
-        setMessage('Magic link sent! Check your email.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send magic link');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
-          {error}
-        </div>
-      )}
-      {message && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm">
-          {message}
-        </div>
-      )}
-
-      {!otpSent ? (
-        <form onSubmit={handleSendOtp} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Sending...' : 'Send OTP'}
-          </Button>
-          <button
-            type="button"
-            onClick={handleSendMagicLink}
-            disabled={loading}
-            className="w-full text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Send magic link instead
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleVerifyOtp} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="otp">Enter OTP</Label>
-            <Input
-              id="otp"
-              type="text"
-              placeholder="6-digit code"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-              maxLength={6}
-              pattern="[0-9]{6}"
-              autoComplete="one-time-code"
-              className="text-center text-2xl tracking-widest"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Verifying...' : 'Verify OTP'}
-          </Button>
-          <button
-            type="button"
-            onClick={() => { setOtpSent(false); setOtp(''); setMessage(''); }}
-            className="w-full text-sm text-gray-500 hover:text-gray-700"
-          >
-            Back to email
-          </button>
-        </form>
-      )}
-    </div>
   );
 }

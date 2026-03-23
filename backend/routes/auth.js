@@ -6,11 +6,7 @@ import {
   logout,
   changePassword,
   refreshAccessToken,
-  oauthCallback,
-  sendOtp,
-  verifyOtp,
-  sendMagicLink,
-  verifyMagicLink
+  oauthCallback
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -22,14 +18,6 @@ router.post('/refresh', refreshAccessToken);
 router.get('/me', protect, getMe);
 router.post('/logout', protect, logout);
 router.put('/change-password', protect, changePassword);
-
-// ─── Email OTP ───────────────────────────────────────────────────
-router.post('/otp/send', sendOtp);
-router.post('/otp/verify', verifyOtp);
-
-// ─── Magic Link ──────────────────────────────────────────────────
-router.post('/magic-link/send', sendMagicLink);
-router.post('/magic-link/verify', verifyMagicLink);
 
 // ─── Google OAuth ────────────────────────────────────────────────
 router.get('/google',

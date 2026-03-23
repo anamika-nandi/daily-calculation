@@ -36,22 +36,6 @@ export function AuthProvider({ children }) {
     return response;
   }, []);
 
-  const loginWithOtp = useCallback(async (email, otp) => {
-    const response = await authApi.verifyOtp(email, otp);
-    if (response.success) {
-      setUser(response.user);
-    }
-    return response;
-  }, []);
-
-  const loginWithMagicLink = useCallback(async (email, token) => {
-    const response = await authApi.verifyMagicLink(email, token);
-    if (response.success) {
-      setUser(response.user);
-    }
-    return response;
-  }, []);
-
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -65,12 +49,10 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
-    loginWithOtp,
-    loginWithMagicLink,
     logout,
     checkAuth,
     isAuthenticated: !!user
-  }), [user, loading, login, loginWithOtp, loginWithMagicLink, logout, checkAuth]);
+  }), [user, loading, login, logout, checkAuth]);
 
   return (
     <AuthContext.Provider value={value}>

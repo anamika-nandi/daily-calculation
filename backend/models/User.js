@@ -56,16 +56,6 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
-  // OTP / Magic Link fields
-  otp: {
-    code: { type: String, default: null },
-    expiresAt: { type: Date, default: null },
-    attempts: { type: Number, default: 0 }
-  },
-  magicLinkToken: {
-    token: { type: String, default: null },
-    expiresAt: { type: Date, default: null }
-  }
 }, {
   timestamps: true
 });
@@ -86,8 +76,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
-  delete user.otp;
-  delete user.magicLinkToken;
   return user;
 };
 
